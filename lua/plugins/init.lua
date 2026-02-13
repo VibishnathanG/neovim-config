@@ -1,5 +1,6 @@
 require("lazy").setup({
   { import = "plugins.ui" },
+  { import = "plugins.multicursor" },
   { import = "plugins.treesitter" },
   { import = "plugins.mason" },
   { import = "plugins.completion" },
@@ -10,4 +11,3 @@ require("lazy").setup({
   { import = "plugins.statusline" },
   { import = "plugins.dap" },
 })
-
