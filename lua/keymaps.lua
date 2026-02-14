@@ -246,27 +246,38 @@ vim.keymap.set({ "n", "i", "v" }, "<A-Right>", smart_end_of_line)
 
 
 ---------------------------------------------------
--- SMART STARTUP ROUTING
+-- SMART STARTUP ROUTING 
 ---------------------------------------------------
 
 vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()
     local args = vim.fn.argv()
 
-    -- nvim file.json → open file only
-    if #args == 1 and vim.fn.filereadable(args[1]) == 1 then
+    -- Case 1: nvim → telescope current folder
+    if #args == 0 then
+      require("telescope.builtin").find_files({
+        cwd = vim.fn.getcwd(),
+        hidden = true,
+        no_ignore = true,
+      })
       return
     end
 
-    -- nvim folder OR nvim
-    if #args == 1 and vim.fn.isdirectory(args[1]) == 1 then
-      vim.cmd("cd " .. args[1])
+    local target = args[1]
+
+    -- Case 2: nvim folder/ → project UI
+    if vim.fn.isdirectory(target) == 1 then
+      vim.cmd("cd " .. target)
+      open_project_ui()
+      return
     end
 
-    open_project_ui()
+    -- Case 3: nvim file → open editor only
+    -- do nothing
   end,
   once = true,
 })
+
 
 ---------------------------------------------------
 -- ALWAYS FOLLOW BUFFER DIRECTORY
@@ -353,3 +364,10 @@ local function toggle_terminal()
 end
 
 vim.keymap.set({ "n", "i" }, "<A-t>", toggle_terminal)
+
+
+-- delete without overwriting clipboard
+vim.keymap.set({ "n", "v" }, "d", "\"_d")
+vim.keymap.set({ "n", "v" }, "D", "\"_D")
+vim.keymap.set({ "n", "v" }, "x", "\"_x")
+vim.keymap.set({ "n", "v" }, "c", "\"_c")
