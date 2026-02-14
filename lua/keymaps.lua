@@ -1,35 +1,31 @@
----------------------------------------------------
--- KEYMAP LEGEND
----------------------------------------------------
--- Shift+V      → Visual block mode
--- Shift+E      → Toggle file explorer
--- Shift+FF     → Find files in project
--- Shift+FG     → Grep text in project
--- Shift+CF     → Find files in current folder
--- Shift+FH     → Find files in HOME directory
--- Shift+FS     → Find files in chosen folder
--- Shift+TS     → Grep text in chosen folder
---
--- Alt+V        → Vertical split
--- Alt+H        → Horizontal split
---
--- Ctrl+A       → Select all
--- Ctrl+C       → Copy all
--- Ctrl+X       → Cut all
--- Ctrl+Z       → Delete all (no yank)
---
--- Shift+Z      → Quit all without saving
--- Shift+S      → Save all and quit
---
--- PageUp       → Jump to top of file and insert
--- PageDown     → Jump to last empty line and insert
---
--- Shift+PgDn   → Rotate to next window
--- Shift+PgUp   → Rotate to previous window
---
--- Visual >     → Indent right (repeatable)
--- Visual <     → Indent left (repeatable)
----------------------------------------------------
+-- Shift+V → Visual block mode
+-- Shift+E → Toggle file explorer
+-- Shift+FF → Find files in project
+-- Shift+FG → Grep text in project
+-- Shift+CF → Find files in current folder
+-- Shift+FH → Find files in HOME directory
+-- Shift+FS → Find files in chosen folder
+-- Shift+TS → Grep text in chosen folder
+-- Alt+V → Vertical split
+-- Alt+H → Horizontal split
+-- Ctrl+A → Select all
+-- Ctrl+C → Copy all
+-- Ctrl+X → Cut all
+-- Ctrl+Z → Delete all (no yank)
+-- Shift+Z → Quit all without saving
+-- Shift+S → Save all and quit
+-- PageUp → Jump to top of file and insert
+-- PageDown → Jump to last empty line and insert
+-- Shift+Home → Switch window/buffer
+-- Alt+Left → Start of line
+-- Alt+Right → End of line
+-- Visual > → Indent right (repeatable)
+-- Visual < → Indent left (repeatable)
+-- Shift+DT → Toggle diagnostics
+-- Alt+B → Toggle project browser (tree + telescope)
+-- Home → Jump back to editor buffer
+-- Alt+T → Toggle terminal split
+
 
 
 local map = vim.keymap.set
@@ -191,3 +187,169 @@ vim.opt.undodir = vim.fn.stdpath("data") .. "/undo"
 -- })
 
 ---------------------------------------------------
+-- DIAGNOSTICS TOGGLE (Shift + D T)
+---------------------------------------------------
+
+local diagnostics_enabled = true
+
+local function toggle_diagnostics()
+  diagnostics_enabled = not diagnostics_enabled
+
+  if diagnostics_enabled then
+    vim.diagnostic.enable()
+    print("Diagnostics ON")
+  else
+    vim.diagnostic.disable()
+    print("Diagnostics OFF")
+  end
+end
+
+vim.keymap.set("n", "<S-d><S-t>", toggle_diagnostics)
+
+
+
+---------------------------------------------------
+-- PROJECT LAUNCHER SYSTEM
+---------------------------------------------------
+
+local function open_project_ui()
+  -- open tree
+  require("nvim-tree.api").tree.open()
+
+  -- open telescope and KEEP focus there
+  require("telescope.builtin").find_files({
+    cwd = vim.fn.getcwd(),
+    hidden = true,
+    no_ignore = true,
+  })
+end
+
+
+---------------------------------------------------
+-- ALT + ARROWS → line boundaries (all modes)
+---------------------------------------------------
+
+local function smart_start_of_line()
+  local mode = vim.fn.mode()
+  vim.cmd("normal! 0")
+  if mode == "i" then vim.cmd("startinsert") end
+end
+
+local function smart_end_of_line()
+  local mode = vim.fn.mode()
+  vim.cmd("normal! $")
+  if mode == "i" then vim.cmd("startinsert") end
+end
+
+vim.keymap.set({ "n", "i", "v" }, "<A-Left>", smart_start_of_line)
+vim.keymap.set({ "n", "i", "v" }, "<A-Right>", smart_end_of_line)
+
+
+---------------------------------------------------
+-- SMART STARTUP ROUTING
+---------------------------------------------------
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    local args = vim.fn.argv()
+
+    -- nvim file.json → open file only
+    if #args == 1 and vim.fn.filereadable(args[1]) == 1 then
+      return
+    end
+
+    -- nvim folder OR nvim
+    if #args == 1 and vim.fn.isdirectory(args[1]) == 1 then
+      vim.cmd("cd " .. args[1])
+    end
+
+    open_project_ui()
+  end,
+  once = true,
+})
+
+---------------------------------------------------
+-- ALWAYS FOLLOW BUFFER DIRECTORY
+---------------------------------------------------
+
+vim.api.nvim_create_autocmd("BufEnter", {
+  callback = function()
+    local file = vim.fn.expand("%:p:h")
+    if file ~= "" then
+      vim.cmd("cd " .. file)
+    end
+  end,
+})
+
+---------------------------------------------------
+-- TREE + TELESCOPE TOGGLE
+---------------------------------------------------
+
+local project_visible = true
+
+vim.keymap.set("n", "<A-Home>", function()
+  local api = require("nvim-tree.api")
+
+  if project_visible then
+    api.tree.close()
+    project_visible = false
+  else
+    open_project_ui()
+    project_visible = true
+  end
+end)
+
+---------------------------------------------------
+-- HOME → jump back to editor
+---------------------------------------------------
+
+vim.keymap.set("n", "<Home>", function()
+  vim.cmd("wincmd p")
+end)
+
+---------------------------------------------------
+-- OPTIONAL: reload tree on directory change
+---------------------------------------------------
+
+vim.api.nvim_create_autocmd("DirChanged", {
+  callback = function()
+    require("nvim-tree.api").tree.reload()
+  end,
+})
+
+
+---------------------------------------------------
+-- BUFFER SWITCH (Shift + Home)
+---------------------------------------------------
+
+vim.keymap.set({ "n", "i" }, "<S-Home>", "<Esc><C-w>w")
+
+
+---------------------------------------------------
+-- TERMINAL TOGGLE (ephemeral top split)
+---------------------------------------------------
+
+local term_win = nil
+
+local function toggle_terminal()
+  -- if open → close + kill buffer
+  if term_win and vim.api.nvim_win_is_valid(term_win) then
+    local buf = vim.api.nvim_win_get_buf(term_win)
+    vim.api.nvim_win_close(term_win, true)
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+    term_win = nil
+    return
+  end
+
+  -- open new terminal at top
+  vim.cmd("topleft split")
+  vim.cmd("resize 12")
+  vim.cmd("terminal")
+
+  term_win = vim.api.nvim_get_current_win()
+  vim.cmd("startinsert")
+end
+
+vim.keymap.set({ "n", "i" }, "<A-t>", toggle_terminal)
