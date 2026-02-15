@@ -153,10 +153,25 @@ echo ""
 echo "🌙 Step 7: Lua Development Tools"
 echo "==============================="
 
+apt remove -y cargo rustc || true
+
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+source "$HOME/.cargo/env"
+
+rustup update
+rustup default stable
+
+apt install -y cargo
+
+cargo install stylua
+
+# ensure cargo bin path is available
+export PATH="$HOME/.cargo/bin:$PATH"
+
 apt install -y \
     lua5.1 \
     luarocks \
-    stylua
 
 # Install Lua Language Server
 if ! command -v lua-language-server &> /dev/null; then
@@ -165,7 +180,6 @@ if ! command -v lua-language-server &> /dev/null; then
 fi
 
 log_info "Lua tools installed"
-
 ################################################################################
 # 8. CODE FORMATTERS & LINTERS
 ################################################################################
@@ -204,10 +218,27 @@ echo ""
 echo "🗣️  Step 9: Language Servers Installation"
 echo "=========================================="
 
-# TypeScript & JavaScript
-npm install -g \
-    typescript \
-    typescript-language-server
+# Kubernetes YAML (schema-aware)
+npm install -g yaml-language-server
+
+# Dockerfile
+npm install -g dockerfile-language-server-nodejs
+
+# Terraform
+npm install -g terraform-ls
+
+# AWS CloudFormation / SAM (Python-based)
+pip3 install cfn-lint
+
+# GitHub Actions
+npm install -g @github-actions/languageserver
+
+# Ansible
+pip3 install ansible-language-server
+
+# Helm (Kubernetes templating)
+npm install -g @microsoft/helm-language-server
+
 
 log_info "TypeScript Language Server installed"
 
