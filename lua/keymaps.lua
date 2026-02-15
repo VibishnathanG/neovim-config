@@ -1,4 +1,3 @@
--- Shift+V → Visual block mode
 -- Shift+E → Toggle file explorer
 -- Shift+FF → Find files in project
 -- Shift+FG → Grep text in project
@@ -26,8 +25,6 @@
 -- Home → Jump back to editor buffer
 -- Alt+T → Toggle terminal split
 
-
-
 local map = vim.keymap.set
 
 -- Visual block fallback (terminal-safe)
@@ -42,46 +39,50 @@ map("n", "<S-f><S-g>", "<cmd>Telescope live_grep<CR>")
 
 -- Current folder search
 map("n", "<S-c><S-f>", function()
-  require("telescope.builtin").find_files({
-    cwd = vim.fn.getcwd(),
-    hidden = true,
-    no_ignore = true,
-  })
+	require("telescope.builtin").find_files({
+		cwd = vim.fn.getcwd(),
+		hidden = true,
+		no_ignore = true,
+	})
 end, { desc = "Find files in current folder" })
 
 -- HOME directory search
 map("n", "<S-f><S-h>", function()
-  require("telescope.builtin").find_files({
-    cwd = vim.loop.os_homedir(),
-    hidden = true,
-    no_ignore = true,
-  })
+	require("telescope.builtin").find_files({
+		cwd = vim.loop.os_homedir(),
+		hidden = true,
+		no_ignore = true,
+	})
 end)
 
 -- Dynamic folder file search
 map("n", "<S-f><S-s>", function()
-  vim.ui.input({ prompt = "Search path: ", default = "/" }, function(input)
-    if not input or input == "" then return end
-    require("telescope.builtin").find_files({
-      cwd = input,
-      hidden = true,
-      no_ignore = true,
-      follow = true,
-    })
-  end)
+	vim.ui.input({ prompt = "Search path: ", default = "/" }, function(input)
+		if not input or input == "" then
+			return
+		end
+		require("telescope.builtin").find_files({
+			cwd = input,
+			hidden = true,
+			no_ignore = true,
+			follow = true,
+		})
+	end)
 end)
 
 -- Dynamic folder text search
 map("n", "<S-t><S-s>", function()
-  vim.ui.input({ prompt = "Grep path: ", default = "/" }, function(input)
-    if not input or input == "" then return end
-    require("telescope.builtin").live_grep({
-      cwd = input,
-      additional_args = function()
-        return { "--hidden", "--no-ignore" }
-      end,
-    })
-  end)
+	vim.ui.input({ prompt = "Grep path: ", default = "/" }, function(input)
+		if not input or input == "" then
+			return
+		end
+		require("telescope.builtin").live_grep({
+			cwd = input,
+			additional_args = function()
+				return { "--hidden", "--no-ignore" }
+			end,
+		})
+	end)
 end)
 
 ---------------------------------------------------
@@ -108,7 +109,7 @@ map("n", "<C-c>", "ggVGy")
 map("n", "<C-x>", "ggVGd")
 
 -- Delete all (no yank)
-map("n", "<C-z>", "ggVG\"_d")
+map("n", "<C-z>", 'ggVG"_d')
 
 -- Quit ALL without saving
 vim.keymap.set("n", "Z", ":qa!<CR>")
@@ -131,29 +132,29 @@ vim.keymap.set({ "n", "i" }, "<S-PageUp>", "<Esc><C-w>W0i")
 ---------------------------------------------------
 
 local function ensure_insert()
-  if vim.fn.mode() ~= "i" then
-    vim.cmd("startinsert")
-  end
+	if vim.fn.mode() ~= "i" then
+		vim.cmd("startinsert")
+	end
 end
 
 -- PageUp → top of file
 vim.keymap.set({ "n", "i" }, "<PageUp>", function()
-  vim.api.nvim_win_set_cursor(0, { 1, 0 })
-  ensure_insert()
+	vim.api.nvim_win_set_cursor(0, { 1, 0 })
+	ensure_insert()
 end)
 
 -- PageDown → ensure empty last line
 local function goto_last_empty_line()
-  local last = vim.fn.line("$")
-  local text = vim.fn.getline(last)
+	local last = vim.fn.line("$")
+	local text = vim.fn.getline(last)
 
-  if text ~= "" then
-    vim.api.nvim_buf_set_lines(0, last, last, false, { "" })
-    last = last + 1
-  end
+	if text ~= "" then
+		vim.api.nvim_buf_set_lines(0, last, last, false, { "" })
+		last = last + 1
+	end
 
-  vim.api.nvim_win_set_cursor(0, { last, 0 })
-  ensure_insert()
+	vim.api.nvim_win_set_cursor(0, { last, 0 })
+	ensure_insert()
 end
 
 vim.keymap.set({ "n", "i" }, "<PageDown>", goto_last_empty_line)
@@ -164,7 +165,6 @@ vim.keymap.set({ "n", "i" }, "<PageDown>", goto_last_empty_line)
 
 vim.keymap.set("v", ">", ">gv")
 vim.keymap.set("v", "<", "<gv")
-
 
 ---------------------------------------------------
 -- PERSISTENT UNDO
@@ -193,103 +193,102 @@ vim.opt.undodir = vim.fn.stdpath("data") .. "/undo"
 local diagnostics_enabled = true
 
 local function toggle_diagnostics()
-  diagnostics_enabled = not diagnostics_enabled
+	diagnostics_enabled = not diagnostics_enabled
 
-  if diagnostics_enabled then
-    vim.diagnostic.enable()
-    print("Diagnostics ON")
-  else
-    vim.diagnostic.disable()
-    print("Diagnostics OFF")
-  end
+	if diagnostics_enabled then
+		vim.diagnostic.enable()
+		print("Diagnostics ON")
+	else
+		vim.diagnostic.disable()
+		print("Diagnostics OFF")
+	end
 end
 
 vim.keymap.set("n", "<S-d><S-t>", toggle_diagnostics)
-
-
 
 ---------------------------------------------------
 -- PROJECT LAUNCHER SYSTEM
 ---------------------------------------------------
 
 local function open_project_ui()
-  -- open tree
-  require("nvim-tree.api").tree.open()
+	-- open tree
+	require("nvim-tree.api").tree.open()
 
-  -- open telescope and KEEP focus there
-  require("telescope.builtin").find_files({
-    cwd = vim.fn.getcwd(),
-    hidden = true,
-    no_ignore = true,
-  })
+	-- open telescope and KEEP focus there
+	require("telescope.builtin").find_files({
+		cwd = vim.fn.getcwd(),
+		hidden = true,
+		no_ignore = true,
+	})
 end
-
 
 ---------------------------------------------------
 -- ALT + ARROWS → line boundaries (all modes)
 ---------------------------------------------------
 
 local function smart_start_of_line()
-  local mode = vim.fn.mode()
-  vim.cmd("normal! 0")
-  if mode == "i" then vim.cmd("startinsert") end
+	local mode = vim.fn.mode()
+	vim.cmd("normal! 0")
+	if mode == "i" then
+		vim.cmd("startinsert")
+	end
 end
 
 local function smart_end_of_line()
-  local mode = vim.fn.mode()
-  vim.cmd("normal! $")
-  if mode == "i" then vim.cmd("startinsert") end
+	local mode = vim.fn.mode()
+	vim.cmd("normal! $")
+	if mode == "i" then
+		vim.cmd("startinsert")
+	end
 end
 
 vim.keymap.set({ "n", "i", "v" }, "<A-Left>", smart_start_of_line)
 vim.keymap.set({ "n", "i", "v" }, "<A-Right>", smart_end_of_line)
 
-
 ---------------------------------------------------
--- SMART STARTUP ROUTING 
+-- SMART STARTUP ROUTING
 ---------------------------------------------------
 
 vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    local args = vim.fn.argv()
+	callback = function()
+		local args = vim.fn.argv()
 
-    -- Case 1: nvim → telescope current folder
-    if #args == 0 then
-      require("telescope.builtin").find_files({
-        cwd = vim.fn.getcwd(),
-        hidden = true,
-        no_ignore = true,
-      })
-      return
-    end
+		-- Case 1: nvim → telescope current folder
+		if #args == 0 then
+			require("telescope.builtin").find_files({
+				cwd = vim.fn.getcwd(),
+				hidden = true,
+				no_ignore = true,
+			})
+			return
+		end
 
-    local target = args[1]
+		local target = args[1]
 
-    -- Case 2: nvim folder/ → project UI
-    if vim.fn.isdirectory(target) == 1 then
-      vim.cmd("cd " .. target)
-      open_project_ui()
-      return
-    end
+		-- Case 2: nvim folder/ → project UI
+		if vim.fn.isdirectory(target) == 1 then
+			vim.cmd("cd " .. target)
+			open_project_ui()
+			return
+		end
 
-    -- Case 3: nvim file → open editor only
-    -- do nothing
-  end,
-  once = true,
+		-- Case 3: nvim file → open editor only
+		-- do nothing
+	end,
+	once = true,
 })
-
 
 ---------------------------------------------------
 -- ALWAYS FOLLOW BUFFER DIRECTORY
 ---------------------------------------------------
 
 vim.api.nvim_create_autocmd("BufEnter", {
-  callback = function()
-    local file = vim.fn.expand("%:p:h")
-    if file ~= "" then
-      vim.cmd("cd " .. file)
-    end
-  end,
+	callback = function()
+		local file = vim.fn.expand("%:p:h")
+		if file ~= "" then
+			vim.cmd("cd " .. file)
+		end
+	end,
 })
 
 ---------------------------------------------------
@@ -299,15 +298,15 @@ vim.api.nvim_create_autocmd("BufEnter", {
 local project_visible = true
 
 vim.keymap.set("n", "<A-Home>", function()
-  local api = require("nvim-tree.api")
+	local api = require("nvim-tree.api")
 
-  if project_visible then
-    api.tree.close()
-    project_visible = false
-  else
-    open_project_ui()
-    project_visible = true
-  end
+	if project_visible then
+		api.tree.close()
+		project_visible = false
+	else
+		open_project_ui()
+		project_visible = true
+	end
 end)
 
 ---------------------------------------------------
@@ -315,7 +314,7 @@ end)
 ---------------------------------------------------
 
 vim.keymap.set("n", "<Home>", function()
-  vim.cmd("wincmd p")
+	vim.cmd("wincmd p")
 end)
 
 ---------------------------------------------------
@@ -323,18 +322,16 @@ end)
 ---------------------------------------------------
 
 vim.api.nvim_create_autocmd("DirChanged", {
-  callback = function()
-    require("nvim-tree.api").tree.reload()
-  end,
+	callback = function()
+		require("nvim-tree.api").tree.reload()
+	end,
 })
-
 
 ---------------------------------------------------
 -- BUFFER SWITCH (Shift + Home)
 ---------------------------------------------------
 
 vim.keymap.set({ "n", "i" }, "<S-Home>", "<Esc><C-w>w")
-
 
 ---------------------------------------------------
 -- TERMINAL TOGGLE (ephemeral top split)
@@ -343,31 +340,50 @@ vim.keymap.set({ "n", "i" }, "<S-Home>", "<Esc><C-w>w")
 local term_win = nil
 
 local function toggle_terminal()
-  -- if open → close + kill buffer
-  if term_win and vim.api.nvim_win_is_valid(term_win) then
-    local buf = vim.api.nvim_win_get_buf(term_win)
-    vim.api.nvim_win_close(term_win, true)
-    if vim.api.nvim_buf_is_valid(buf) then
-      vim.api.nvim_buf_delete(buf, { force = true })
-    end
-    term_win = nil
-    return
-  end
+	-- if open → close + kill buffer
+	if term_win and vim.api.nvim_win_is_valid(term_win) then
+		local buf = vim.api.nvim_win_get_buf(term_win)
+		vim.api.nvim_win_close(term_win, true)
+		if vim.api.nvim_buf_is_valid(buf) then
+			vim.api.nvim_buf_delete(buf, { force = true })
+		end
+		term_win = nil
+		return
+	end
 
-  -- open new terminal at top
-  vim.cmd("topleft split")
-  vim.cmd("resize 12")
-  vim.cmd("terminal")
+	-- open new terminal at top
+	vim.cmd("topleft split")
+	vim.cmd("resize 12")
+	vim.cmd("terminal")
 
-  term_win = vim.api.nvim_get_current_win()
-  vim.cmd("startinsert")
+	term_win = vim.api.nvim_get_current_win()
+	vim.cmd("startinsert")
 end
 
 vim.keymap.set({ "n", "i" }, "<A-t>", toggle_terminal)
 
-
 -- delete without overwriting clipboard
-vim.keymap.set({ "n", "v" }, "d", "\"_d")
-vim.keymap.set({ "n", "v" }, "D", "\"_D")
-vim.keymap.set({ "n", "v" }, "x", "\"_x")
-vim.keymap.set({ "n", "v" }, "c", "\"_c")
+vim.keymap.set({ "n", "v" }, "d", '"_d')
+vim.keymap.set({ "n", "v" }, "D", '"_D')
+vim.keymap.set({ "n", "v" }, "x", '"_x')
+vim.keymap.set({ "n", "v" }, "c", '"_c')
+
+-- multi-cursor replace using AF
+vim.keymap.set({ "n", "i" }, "AF", "<Esc>c<Plug>(VM-Find-Under)", { silent = true })
+vim.keymap.set("v", "AF", "c<Plug>(VM-Find-Subword-Under)", { silent = true })
+
+-- Diagnostics Off by default:
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function()
+		vim.diagnostic.disable()
+	end,
+})
+
+vim.keymap.set("n", "<A-e>", function()
+	local enabled = vim.diagnostic.is_enabled()
+	if enabled then
+		vim.diagnostic.disable()
+	else
+		vim.diagnostic.enable()
+	end
+end, { silent = true })
