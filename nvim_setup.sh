@@ -105,6 +105,27 @@ apt install -y \
 pip3 install --upgrade pip setuptools wheel
 log_info "Python 3 installed and upgraded"
 
+sudo apt update
+sudo apt install python3-flake8
+
+sudo tee /usr/local/bin/flake8 >/dev/null <<EOF
+#!/bin/sh
+exec python3 -m flake8 "$@"
+EOF
+
+sudo chmod +x /usr/local/bin/flake8
+sudo tee /usr/local/bin/flake8 >/dev/null <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+  exec python3 -m flake8 --version
+fi
+exec python3 -m flake8 "$@"
+EOF
+
+sudo chmod +x /usr/local/bin/flake8
+flake8 --version
+
+
 ################################################################################
 # 5. NODE.JS & NPM SETUP
 ################################################################################

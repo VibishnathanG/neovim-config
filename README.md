@@ -240,6 +240,13 @@
 
 ---
 
+## 🚀 Other quick actions
+
+    - **ALT+f** --> While on over a text this give us capability to edit all the match
+    - **cc**    --> Change entire line
+
+
+
 **Legend:**
 - `<A-*>` = Alt+key
 - `<S-*>` = Shift+key  
