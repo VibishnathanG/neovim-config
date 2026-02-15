@@ -199,7 +199,7 @@ local function toggle_diagnostics()
 		vim.diagnostic.enable()
 		print("Diagnostics ON")
 	else
-		vim.diagnostic.disable()
+		vim.diagnostic.enable(false)
 		print("Diagnostics OFF")
 	end
 end
@@ -369,20 +369,62 @@ vim.keymap.set({ "n", "v" }, "x", '"_x')
 vim.keymap.set({ "n", "v" }, "c", '"_c')
 
 -- multi-cursor replace using AF
-vim.keymap.set({ "n", "i" }, "AF", "<Esc>c<Plug>(VM-Find-Under)", { silent = true })
-vim.keymap.set("v", "AF", "c<Plug>(VM-Find-Subword-Under)", { silent = true })
+local function replace_everywhere()
+	local mode = vim.fn.mode()
+	local text
+
+	if mode:match("[vV\22]") then
+		local _, ls, cs = unpack(vim.fn.getpos("'<"))
+		local _, le, ce = unpack(vim.fn.getpos("'>"))
+		local lines = vim.fn.getline(ls, le)
+
+		if #lines == 0 then
+			return
+		end
+
+		lines[#lines] = string.sub(lines[#lines], 1, ce)
+		lines[1] = string.sub(lines[1], cs)
+
+		text = table.concat(lines, "\n")
+	else
+		text = vim.fn.expand("<cword>")
+	end
+
+	if text == "" then
+		return
+	end
+
+	local replacement = vim.fn.input("Replace with: ")
+	if replacement == "" then
+		return
+	end
+
+	local escaped = vim.fn.escape(text, [[\/.*$^~[]])
+	local repl = vim.fn.escape(replacement, [[\/&]])
+
+	-- flatten buffer to string for counting
+	local buf = table.concat(vim.fn.getline(1, "$"), "\n")
+	local _, count = string.gsub(buf, escaped, "")
+
+	-- actual replacement
+	vim.cmd(string.format("%%s/%s/%s/g", escaped, repl))
+
+	vim.notify("Replaced " .. count .. " occurrence(s)")
+end
+
+vim.keymap.set({ "n", "v", "x", "i" }, "<A-f>", replace_everywhere, { silent = true })
 
 -- Diagnostics Off by default:
 vim.api.nvim_create_autocmd("LspAttach", {
 	callback = function()
-		vim.diagnostic.disable()
+		vim.diagnostic.enable(false)
 	end,
 })
 
 vim.keymap.set("n", "<A-e>", function()
 	local enabled = vim.diagnostic.is_enabled()
 	if enabled then
-		vim.diagnostic.disable()
+		vim.diagnostic.enable(false)
 	else
 		vim.diagnostic.enable()
 	end
