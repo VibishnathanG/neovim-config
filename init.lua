@@ -36,3 +36,61 @@ if is_wsl then
 		cache_enabled = 0,
 	}
 end
+
+local function show_help()
+	local help_text = {
+		" ",
+		"███╗   ██╗██╗   ██╗██╗███╗   ███╗",
+		"████╗  ██║██║   ██║██║████╗ ████║",
+		"██╔██╗ ██║██║   ██║██║██╔████╔██║",
+		"██║╚██╗██║╚██╗ ██╔╝██║██║╚██╔╝██║",
+		"██║ ╚████║ ╚████╔╝ ██║██║ ╚═╝ ██║",
+		"╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═╝     ╚═╝",
+		" ",
+		"KEYBINDINGS (Sorted):",
+		" ",
+		"Alt+B        → Toggle project browser (tree + telescope)",
+		"Alt+E        → Toggle diagnostics",
+		"Alt+F        → Multi-cursor replace",
+		"Alt+H        → Horizontal split",
+		"Alt+Home     → Open telescope",
+		"Alt+Left     → Start of line",
+		"Alt+Right    → End of line",
+		"Alt+T        → Toggle terminal",
+		"Alt+V        → Vertical split",
+		" ",
+		"Ctrl+A       → Select all",
+		"Ctrl+C       → Copy all",
+		"Ctrl+X       → Cut all",
+		"Ctrl+Z       → Delete all (no yank)",
+		" ",
+		"Home         → Jump back to editor buffer",
+		" ",
+		"PageDown     → Jump to last empty line",
+		"PageUp       → Jump to top of file",
+		" ",
+		"Shift+CF     → Find files in current folder",
+		"Shift+E      → Toggle file explorer",
+		"Shift+FG     → Grep text in project",
+		"Shift+FF     → Find files in project",
+		"Shift+FH     → Find files in HOME directory",
+		"Shift+FS     → Find files in chosen folder",
+		"Shift+PageDown → Next window",
+		"Shift+PageUp   → Previous window",
+		"Shift+S      → Save all and quit",
+		"Shift+TS     → Grep text in chosen folder",
+		"Shift+Z      → Quit all without saving",
+		" ",
+		"S            → Save all and quit",
+		"Z            → Quit all without saving",
+		" ",
+	}
+
+	vim.cmd("enew")
+	vim.bo.buftype = "nofile"
+	vim.bo.bufhidden = "wipe"
+	vim.bo.swapfile = false
+	vim.api.nvim_buf_set_lines(0, 0, -1, false, help_text)
+	vim.api.nvim_win_set_cursor(0, { 1, 0 })
+	vim.bo.modifiable = false
+end
