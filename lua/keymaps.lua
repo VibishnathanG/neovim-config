@@ -351,20 +351,22 @@ end)
 ---------------------------------------------------
 -- SELECT ALL / COPY / CUT / DELETE
 ---------------------------------------------------
-map("n", "<C-a>", "ggVG")
+map("n", "<C-a>", function()
+	vim.cmd.normal({ "ggVG", bang = true })
+end)
+
 map("n", "<C-c>", function()
-	vim.cmd("ggVGy")
+	vim.cmd.normal({ "ggVGy", bang = true })
 	vim.notify("✅ All content copied", vim.log.levels.INFO)
 end)
+
 map("n", "<C-x>", function()
-	vim.cmd("ggVGd")
+	vim.cmd.normal({ "ggVGd", bang = true })
 	vim.notify("✂️  All content cut", vim.log.levels.INFO)
 end)
-map("n", "<C-z>", 'ggVG"_d')
-map("n", "Z", ":qa!<CR>")
-map("n", "S", function()
-	vim.cmd("wqa")
-	vim.notify("💾 All files saved and quit", vim.log.levels.INFO)
+
+map("n", "<C-z>", function()
+	vim.cmd.normal({ 'ggVG"_d', bang = true })
 end)
 
 ---------------------------------------------------
