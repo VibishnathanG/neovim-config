@@ -1,3 +1,5 @@
+-- Capture launch directory once
+vim.g.launch_cwd = vim.fn.getcwd()
 local map = vim.keymap.set
 
 -- Helper to safely feed keys when necessary
@@ -349,23 +351,28 @@ local function show_welcome()
 	end, opts)
 
 	map("n", "f", function()
-		vim.ui.input({ prompt = "Enter folder path: ", default = vim.fn.getcwd() }, function(input)
-			if input and input ~= "" then
-				if vim.fn.isdirectory(input) == 1 then
-					vim.cmd("cd " .. input)
-					vim.cmd("enew")
-					vim.notify(
-						"📁 Folder opened: " .. input .. " — Current working directory changed.",
-						vim.log.levels.INFO
-					)
-				else
-					vim.notify("❌ Not a valid directory: " .. tostring(input), vim.log.levels.WARN)
-				end
-			else
-				vim.notify("⚠️ Folder open cancelled.", vim.log.levels.WARN)
-			end
-		end)
-	end, opts)
+	vim.ui.input({ prompt = "Enter folder path: ", default = vim.fn.getcwd() }, function(input)
+		if not input or input == "" then
+			vim.notify("⚠️ Folder open cancelled.", vim.log.levels.WARN)
+			return
+		end
+
+		if vim.fn.isdirectory(input) ~= 1 then
+			vim.notify("❌ Not a valid directory: " .. tostring(input), vim.log.levels.WARN)
+			return
+		end
+
+		require("telescope.builtin").find_files({
+			cwd = input,
+			hidden = true,
+			no_ignore = true,
+			follow = true,
+		})
+
+		vim.notify("📂 Telescope opened in: " .. input, vim.log.levels.INFO)
+	end)
+end, opts)
+	
 
 	map("n", "s", function()
 		vim.cmd("enew")
@@ -498,9 +505,15 @@ map("n", "<S-f><S-g>", function()
 end)
 
 map("n", "<S-c><S-f>", function()
-	require("telescope.builtin").find_files({ cwd = vim.fn.getcwd(), hidden = true, no_ignore = true })
-	vim.notify("📂 Searching in cwd: " .. vim.fn.getcwd() .. " (Telescope).", vim.log.levels.INFO)
+	require("telescope.builtin").find_files({
+		cwd = vim.g.launch_cwd,
+		hidden = true,
+		no_ignore = true,
+		follow = true,
+	})
+	vim.notify("📂 Searching launch directory: " .. vim.g.launch_cwd, vim.log.levels.INFO)
 end)
+
 
 map("n", "<S-f><S-h>", function()
 	require("telescope.builtin").find_files({ cwd = vim.loop.os_homedir(), hidden = true, no_ignore = true })
@@ -508,7 +521,7 @@ map("n", "<S-f><S-h>", function()
 end)
 
 map("n", "<S-f><S-s>", function()
-	vim.ui.input({ prompt = "Search path: ", default = "/" }, function(input)
+	vim.ui.input({ prompt = "Search path: ", default = vim.fn.getcwd() }, function(input)
 		if not input or input == "" then
 			vim.notify("⚠️ Search cancelled or empty path.", vim.log.levels.WARN)
 			return
@@ -519,7 +532,7 @@ map("n", "<S-f><S-s>", function()
 end)
 
 map("n", "<S-t><S-s>", function()
-	vim.ui.input({ prompt = "Grep path: ", default = "/" }, function(input)
+	vim.ui.input({ prompt = "Grep path: ", default = vim.fn.getcwd() }, function(input)
 		if not input or input == "" then
 			vim.notify("⚠️ Grep cancelled or empty path.", vim.log.levels.WARN)
 			return
