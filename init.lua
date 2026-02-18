@@ -20,22 +20,57 @@ require("options")
 require("keymaps")
 require("plugins")
 
-local is_wsl = vim.fn.has("wsl") == 1
-
-if is_wsl then
-	vim.g.clipboard = {
-		name = "win32yank-wsl",
-		copy = {
-			["+"] = "/mnt/c/Tools/win32yank.exe -i --crlf",
-			["*"] = "/mnt/c/Tools/win32yank.exe -i --crlf",
-		},
-		paste = {
-			["+"] = "/mnt/c/Tools/win32yank.exe -o --lf",
-			["*"] = "/mnt/c/Tools/win32yank.exe -o --lf",
-		},
-		cache_enabled = 0,
-	}
+local function executable(cmd)
+  return vim.fn.executable(cmd) == 1
 end
+
+local is_wsl = vim.fn.has("wsl") == 1
+local has_display = vim.env.DISPLAY and vim.env.DISPLAY ~= ""
+local has_wayland = vim.env.WAYLAND_DISPLAY and vim.env.WAYLAND_DISPLAY ~= ""
+
+if is_wsl and executable("/mnt/c/Tools/win32yank.exe") then
+  vim.g.clipboard = {
+    name = "win32yank-wsl",
+    copy = {
+      ["+"] = "/mnt/c/Tools/win32yank.exe -i --crlf",
+      ["*"] = "/mnt/c/Tools/win32yank.exe -i --crlf",
+    },
+    paste = {
+      ["+"] = "/mnt/c/Tools/win32yank.exe -o --lf",
+      ["*"] = "/mnt/c/Tools/win32yank.exe -o --lf",
+    },
+    cache_enabled = 0,
+  }
+
+elseif has_wayland and executable("wl-copy") and executable("wl-paste") then
+  vim.g.clipboard = {
+    name = "wl-clipboard",
+    copy = {
+      ["+"] = "wl-copy",
+      ["*"] = "wl-copy --primary",
+    },
+    paste = {
+      ["+"] = "wl-paste",
+      ["*"] = "wl-paste --primary",
+    },
+    cache_enabled = 0,
+  }
+
+elseif has_display and executable("xclip") then
+  vim.g.clipboard = {
+    name = "xclip",
+    copy = {
+      ["+"] = "xclip -selection clipboard",
+      ["*"] = "xclip -selection primary",
+    },
+    paste = {
+      ["+"] = "xclip -selection clipboard -o",
+      ["*"] = "xclip -selection primary -o",
+    },
+    cache_enabled = 0,
+  }
+end
+
 
 local function show_help()
 	local help_text = {
