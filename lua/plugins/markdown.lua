@@ -1,0 +1,21 @@
+return {
+	"iamcco/markdown-preview.nvim",
+	build = "cd app && npm install",
+	ft = { "markdown" },
+	config = function()
+		vim.g.mkdp_auto_start = 0
+		vim.g.mkdp_auto_close = 1
+		vim.g.mkdp_refresh_slow = 0
+		vim.g.mkdp_command_for_global = 0
+		vim.g.mkdp_open_to_the_world = 0
+		vim.g.mkdp_browser = ""
+		vim.g.mkdp_echo_preview_url = 1
+		vim.g.mkdp_theme = "dark"
+
+		-- toggle preview with Ctrl+Shift+V
+		vim.keymap.set("n", "<A-S-m>", "<cmd>MarkdownPreviewToggle<CR>", {
+			desc = "Toggle Markdown Preview",
+			silent = true,
+		})
+	end,
+}

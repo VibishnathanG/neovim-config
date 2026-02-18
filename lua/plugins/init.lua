@@ -1,7 +1,8 @@
 require("lazy").setup({
 	{ import = "plugins.ui" },
 	--	{ import = "plugins.neocodium" },
-    --	{ import = "plugins.dashboard" },
+	--	{ import = "plugins.dashboard" },
+	{ import = "plugins.markdown" },
 	{ import = "plugins.multicursor" },
 	{ import = "plugins.treesitter" },
 	{ import = "plugins.mason" },
