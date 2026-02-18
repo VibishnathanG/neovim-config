@@ -1,4 +1,7 @@
 -- Capture launch directory once
+vim.opt.title = true
+vim.opt.titlestring = "%F - NVIM"
+
 vim.g.launch_cwd = vim.fn.getcwd()
 local map = vim.keymap.set
 
@@ -6,6 +9,26 @@ local map = vim.keymap.set
 local function _feedkeys(raw)
 	local keys = vim.api.nvim_replace_termcodes(raw, true, false, true)
 	vim.api.nvim_feedkeys(keys, "m", true)
+end
+
+---- Lunaline
+---
+
+local function short_path()
+	local path = vim.fn.expand("%:p")
+
+	if path == "" then
+		return "[No Name]"
+	end
+
+	local parts = vim.split(path, "/")
+	local len = #parts
+
+	if len <= 3 then
+		return path
+	end
+
+	return "…/" .. parts[len - 2] .. "/" .. parts[len - 1] .. "/" .. parts[len]
 end
 
 ---------------------------------------------------
@@ -80,8 +103,7 @@ local function show_help()
 	vim.bo.bufhidden = "wipe"
 	vim.bo.swapfile = false
 
-	local help_lines =
-	{
+	local help_lines = {
 		"╔════════════════════════════════════════════════════════════╗",
 		"║      NEOVIM KEYBINDINGS REFERENCE - CUSTOM (Quick)        ║",
 		"║        NEOVIM KEYBINDINGS REFERENCE - CUSTOM (Quick)       ║",
@@ -351,28 +373,27 @@ local function show_welcome()
 	end, opts)
 
 	map("n", "f", function()
-	vim.ui.input({ prompt = "Enter folder path: ", default = vim.fn.getcwd() }, function(input)
-		if not input or input == "" then
-			vim.notify("⚠️ Folder open cancelled.", vim.log.levels.WARN)
-			return
-		end
+		vim.ui.input({ prompt = "Enter folder path: ", default = vim.fn.getcwd() }, function(input)
+			if not input or input == "" then
+				vim.notify("⚠️ Folder open cancelled.", vim.log.levels.WARN)
+				return
+			end
 
-		if vim.fn.isdirectory(input) ~= 1 then
-			vim.notify("❌ Not a valid directory: " .. tostring(input), vim.log.levels.WARN)
-			return
-		end
+			if vim.fn.isdirectory(input) ~= 1 then
+				vim.notify("❌ Not a valid directory: " .. tostring(input), vim.log.levels.WARN)
+				return
+			end
 
-		require("telescope.builtin").find_files({
-			cwd = input,
-			hidden = true,
-			no_ignore = true,
-			follow = true,
-		})
+			require("telescope.builtin").find_files({
+				cwd = input,
+				hidden = true,
+				no_ignore = true,
+				follow = true,
+			})
 
-		vim.notify("📂 Telescope opened in: " .. input, vim.log.levels.INFO)
-	end)
-end, opts)
-	
+			vim.notify("📂 Telescope opened in: " .. input, vim.log.levels.INFO)
+		end)
+	end, opts)
 
 	map("n", "s", function()
 		vim.cmd("enew")
@@ -386,12 +407,12 @@ end, opts)
 end
 
 ---------------------------------------------------
--- FILE PATH DISPLAY IN STATUS LINE
+-- FILE PATH DISPLAY IN COMMAND LINE
 ---------------------------------------------------
-vim.opt.statusline = "%f %m %h %w %y [%{&fileformat}] %p%% [%l:%c]"
+
 map("n", "<leader>fp", function()
 	local filepath = vim.fn.expand("%:p")
-	vim.notify("📍 Full path: " .. filepath .. " — Scope: active buffer (normal mode).", vim.log.levels.INFO)
+	vim.notify("📍 Full path: " .. (filepath ~= "" and filepath or "[No Name]"), vim.log.levels.INFO)
 end, { desc = "Show full file path" })
 
 ---------------------------------------------------
@@ -474,22 +495,13 @@ map({ "n", "v" }, "<S-v>", "<C-v>")
 ---------------------------------------------------
 -- FILE EXPLORER
 ---------------------------------------------------
-map("n", "<S-e>", function()
+local function toggle_tree()
 	vim.cmd("NvimTreeToggle")
-	vim.notify(
-		" File Explorer toggled — Action: NvimTreeToggle (normal).\nTarget: "
-			.. (vim.fn.expand("%:p") or "[no-file]"),
-		vim.log.levels.INFO
-	)
-end)
+	vim.notify(" File Explorer toggled.", vim.log.levels.INFO)
+end
 
-map("n", "<S-Home>", function()
-	vim.cmd("NvimTreeToggle")
-	vim.notify(
-		" File Explorer toggled — Action: NvimTreeToggle (normal).\nTriggered via Shift+Home.",
-		vim.log.levels.INFO
-	)
-end)
+map("n", "<S-e>", toggle_tree, opts)
+map("n", "<S-Home>", toggle_tree, opts)
 
 ---------------------------------------------------
 -- PROJECT SEARCH (Telescope)
@@ -513,7 +525,6 @@ map("n", "<S-c><S-f>", function()
 	})
 	vim.notify("📂 Searching launch directory: " .. vim.g.launch_cwd, vim.log.levels.INFO)
 end)
-
 
 map("n", "<S-f><S-h>", function()
 	require("telescope.builtin").find_files({ cwd = vim.loop.os_homedir(), hidden = true, no_ignore = true })
@@ -821,9 +832,17 @@ vim.api.nvim_create_autocmd("VimEnter", {
 vim.api.nvim_create_autocmd("BufEnter", {
 	callback = function()
 		local file = vim.fn.expand("%:p:h")
-		if file ~= "" then
-			vim.cmd("cd " .. file)
+
+		-- Ignore invalid / special buffers
+		if file == "" then
+			return
 		end
+
+		if vim.fn.isdirectory(file) ~= 1 then
+			return
+		end
+
+		vim.cmd("silent! cd " .. vim.fn.fnameescape(file))
 	end,
 })
 
@@ -944,17 +963,3 @@ vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.smartindent = true
-
----------------------------------------------------
--- SHOW FILE PATH IN CMDLINE
----------------------------------------------------
-vim.api.nvim_create_autocmd("BufEnter", {
-	callback = function()
-		local filepath = vim.fn.expand("%:p")
-		if filepath and filepath ~= "" then
-			vim.opt.statusline = "%f %m %h %w [%Y] %p%% [%l:%c]"
-		end
-	end,
-})
-
--- End of keymaps.lua
