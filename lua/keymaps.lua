@@ -50,10 +50,10 @@ local function save_all_and_quit()
 	vim.cmd("qa")
 end
 
-map({ "n", "v", "i" }, "<S-Z>", function()
+map({ "n", "v" }, "<S-Z>", function()
 	force_quit_all()
 end, { silent = true, desc = "Force quit all (no save)" })
-map({ "n", "v", "i" }, "<S-S>", function()
+map({ "n", "v" }, "<S-S>", function()
 	save_all_and_quit()
 end, { silent = true, desc = "Save all and quit" })
 
@@ -106,7 +106,6 @@ local function show_help()
 	local help_lines = {
 		"╔════════════════════════════════════════════════════════════╗",
 		"║      NEOVIM KEYBINDINGS REFERENCE - CUSTOM (Quick)        ║",
-		"║        NEOVIM KEYBINDINGS REFERENCE - CUSTOM (Quick)       ║",
 		"╚════════════════════════════════════════════════════════════╝",
 		" ",
 		"FILE NAVIGATION:",
@@ -119,6 +118,10 @@ local function show_help()
 		"  Shift+TS             → Grep text in chosen folder",
 		"  Shift+Home           → Toggle file tree",
 		"  Alt+Home             → Toggle telescope (search only)",
+		"   q                   → Delete line/selection (no yank)",
+		"  Alt+↑                → Move current line/selection up",
+		"  Alt+↓                → Move current line/selection down",
+		"   gc                  → Comment and un Comment Lines works with Normal and Visual Mode",
 		" ",
 		"EDITING & SELECTION:",
 		"  Ctrl+A               → Select all",
@@ -208,6 +211,11 @@ local function show_help()
 		"  select text → S(     → Surround selection with parentheses, brackets, quotes, etc. (with vim-surround plugin)",
 		" ",
 		"EDITING:",
+		"  gc  (visual)         → Toggle comment on selection",
+		"  gbc                  → Toggle block comment (line)",
+		"  gb  (visual)         → Toggle block comment (selection)",
+		"  gc{motion}           → Comment using motion (e.g. gc3j)",
+		"  gcip                 → Comment inner paragraph",
 		"  i                    → Insert mode before cursor",
 		"  I                    → Insert at beginning of line",
 		"  a                    → Insert mode after cursor",
@@ -415,77 +423,77 @@ map("n", "<leader>fp", function()
 	vim.notify("📍 Full path: " .. (filepath ~= "" and filepath or "[No Name]"), vim.log.levels.INFO)
 end, { desc = "Show full file path" })
 
----------------------------------------------------
--- Commenting helpers: filetype-aware
----------------------------------------------------
-local function get_comment_tokens()
-	local ft = vim.bo.filetype
-	local mapping = {
-		lua = { line = "--", block = { "--[[", "]]" } },
-		python = { line = "#", block = { "'''", "'''" } },
-		sh = { line = "#" },
-		bash = { line = "#" },
-		zsh = { line = "#" },
-		yaml = { line = "#" },
-		yml = { line = "#" },
-		json = { line = "//" },
-		javascript = { line = "//", block = { "/*", "*/" } },
-		typescript = { line = "//", block = { "/*", "*/" } },
-		html = { block = { "<!--", "-->" } },
-		css = { block = { "/*", "*/" } },
-	}
-	return mapping[ft] or { line = "--" }
-end
-
-local function toggle_comment_ft_line()
-	local tokens = get_comment_tokens()
-	local line = vim.fn.getline(".")
-	local trimmed = vim.fn.trim(line)
-	if tokens.line then
-		local pat = vim.pesc(tokens.line)
-		if vim.regex("^\\s*" .. pat):match_str(trimmed) then
-			local new_line = line:gsub("^(%s*)" .. pat .. "%s*", "%1", 1)
-			vim.fn.setline(".", new_line)
-			vim.notify("💬 Line uncommented (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
-		else
-			local new_line = line:gsub("^(%s*)", "%1" .. tokens.line .. " ", 1)
-			vim.fn.setline(".", new_line)
-			vim.notify("💬 Line commented (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
-		end
-	elseif tokens.block then
-		local s, e = tokens.block[1], tokens.block[2]
-		vim.fn.setline(".", s .. " " .. line .. " " .. e)
-		vim.notify("💬 Wrapped line in block comment (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
-	end
-end
-
-map({ "n", "i" }, "<C-S-L>", function()
-	local was_insert = (vim.fn.mode() == "i")
-	if was_insert then
-		pcall(function()
-			vim.cmd("stopinsert")
-		end)
-	end
-	toggle_comment_ft_line()
-	if was_insert then
-		pcall(function()
-			vim.cmd("startinsert")
-		end)
-	end
-end, { silent = true, desc = "Toggle comment (filetype-aware)" })
-
-map("n", "<C-/>", function()
-	toggle_comment_ft_line()
-end, { silent = true })
-map("v", "<C-/>", function()
-	local start_line = vim.fn.line("'<")
-	local end_line = vim.fn.line("'>")
-	for l = start_line, end_line do
-		vim.api.nvim_win_set_cursor(0, { l, 0 })
-		toggle_comment_ft_line()
-	end
-	vim.notify("💬 Toggled comments across selection (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
-end, { silent = true })
+-- ---------------------------------------------------
+-- -- Commenting helpers: filetype-aware
+-- ---------------------------------------------------
+-- local function get_comment_tokens()
+-- 	local ft = vim.bo.filetype
+-- 	local mapping = {
+-- 		lua = { line = "--", block = { "--[[", "]]" } },
+-- 		python = { line = "#", block = { "'''", "'''" } },
+-- 		sh = { line = "#" },
+-- 		bash = { line = "#" },
+-- 		zsh = { line = "#" },
+-- 		yaml = { line = "#" },
+-- 		yml = { line = "#" },
+-- 		json = { line = "//" },
+-- 		javascript = { line = "//", block = { "/*", "*/" } },
+-- 		typescript = { line = "//", block = { "/*", "*/" } },
+-- 		html = { block = { "<!--", "-->" } },
+-- 		css = { block = { "/*", "*/" } },
+-- 	}
+-- 	return mapping[ft] or { line = "--" }
+-- end
+--
+-- local function toggle_comment_ft_line()
+-- 	local tokens = get_comment_tokens()
+-- 	local line = vim.fn.getline(".")
+-- 	local trimmed = vim.fn.trim(line)
+-- 	if tokens.line then
+-- 		local pat = vim.pesc(tokens.line)
+-- 		if vim.regex("^\\s*" .. pat):match_str(trimmed) then
+-- 			local new_line = line:gsub("^(%s*)" .. pat .. "%s*", "%1", 1)
+-- 			vim.fn.setline(".", new_line)
+-- 			vim.notify("💬 Line uncommented (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
+-- 		else
+-- 			local new_line = line:gsub("^(%s*)", "%1" .. tokens.line .. " ", 1)
+-- 			vim.fn.setline(".", new_line)
+-- 			vim.notify("💬 Line commented (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
+-- 		end
+-- 	elseif tokens.block then
+-- 		local s, e = tokens.block[1], tokens.block[2]
+-- 		vim.fn.setline(".", s .. " " .. line .. " " .. e)
+-- 		vim.notify("💬 Wrapped line in block comment (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
+-- 	end
+-- end
+--
+-- map({ "n", "i" }, "<C-S-L>", function()
+-- 	local was_insert = (vim.fn.mode() == "i")
+-- 	if was_insert then
+-- 		pcall(function()
+-- 			vim.cmd("stopinsert")
+-- 		end)
+-- 	end
+-- 	toggle_comment_ft_line()
+-- 	if was_insert then
+-- 		pcall(function()
+-- 			vim.cmd("startinsert")
+-- 		end)
+-- 	end
+-- end, { silent = true, desc = "Toggle comment (filetype-aware)" })
+--
+-- map("n", "<A-/>", function()
+-- 	toggle_comment_ft_line()
+-- end, { silent = true })
+-- map("v", "<A-/>", function()
+-- 	local start_line = vim.fn.line("'<")
+-- 	local end_line = vim.fn.line("'>")
+-- 	for l = start_line, end_line do
+-- 		vim.api.nvim_win_set_cursor(0, { l, 0 })
+-- 		toggle_comment_ft_line()
+-- 	end
+-- 	vim.notify("💬 Toggled comments across selection (" .. vim.bo.filetype .. ")", vim.log.levels.INFO)
+-- end, { silent = true })
 
 ---------------------------------------------------
 -- Visual block fallback
@@ -883,10 +891,47 @@ map({ "n", "i" }, "<A-t>", toggle_terminal)
 ---------------------------------------------------
 -- CLIPBOARD SAFE DELETE
 ---------------------------------------------------
-map({ "n", "v" }, "d", '"_d')
-map({ "n", "v" }, "D", '"_D')
-map({ "n", "v" }, "x", '"_x')
-map({ "n", "v" }, "c", '"_c')
+
+-- Pure delete using q
+vim.keymap.set("n", "q", '"_dd', {
+	noremap = true,
+	silent = true,
+	desc = "Delete line without yank",
+})
+
+vim.keymap.set("v", "q", '"_d', {
+	noremap = true,
+	silent = true,
+	desc = "Delete selection without yank",
+})
+
+-- Move line down (Normal mode)
+vim.keymap.set("n", "<A-Down>", ":move .+1<CR>==", {
+	noremap = true,
+	silent = true,
+	desc = "Move line down",
+})
+
+-- Move line up (Normal mode)
+vim.keymap.set("n", "<A-Up>", ":move .-2<CR>==", {
+	noremap = true,
+	silent = true,
+	desc = "Move line up",
+})
+
+-- Move selection down (Visual mode)
+vim.keymap.set("v", "<A-Down>", ":move '>+1<CR>gv=gv", {
+	noremap = true,
+	silent = true,
+	desc = "Move selection down",
+})
+
+-- Move selection up (Visual mode)
+vim.keymap.set("v", "<A-Up>", ":move '<-2<CR>gv=gv", {
+	noremap = true,
+	silent = true,
+	desc = "Move selection up",
+})
 
 ---------------------------------------------------
 -- YANK CURRENT LINE (fallback)
