@@ -11,6 +11,35 @@ local function _feedkeys(raw)
 	vim.api.nvim_feedkeys(keys, "m", true)
 end
 
+-- Only start insert when opening a files
+
+-- vim.api.nvim_create_autocmd("VimEnter", {
+-- 	callback = function()
+-- 		if vim.fn.argc() > 0 then
+-- 			vim.cmd("startinsert")
+-- 		end
+-- 	end,
+-- })
+
+-- Only start insert in empty buffer (like scratch mode)
+-- vim.api.nvim_create_autocmd("VimEnter", {
+-- 	callback = function()
+-- 		vim.cmd("startinsert")
+-- 	end,
+-- })
+--
+-- Alternative: Start insert only in terminal buffers
+-- vim.api.nvim_create_autocmd("TermOpen", {
+--   callback = function()
+--     vim.cmd("startinsert")
+--   end,
+-- })
+
+-----------------------------------------------------------
+
+-- Add Shift + Backspace for Removing Entire word
+
+vim.keymap.set("i", "<M-BS>", "<C-W>", { desc = "Delete previous word" })
 ---- Lunaline
 ---
 
@@ -413,6 +442,17 @@ local function show_welcome()
 	map("n", "?", show_help, opts)
 	map("n", "q", "<cmd>qa!<CR>", opts)
 end
+--------------------------------------------------
+-- Render Markdown
+
+keys = {
+	{
+		"<M-m>",
+		"<cmd>RenderMarkdown toggle<cr>",
+		desc = "Toggle Markdown Render",
+		mode = { "n", "i", "v", "x", "o", "c", "t" },
+	},
+}
 
 ---------------------------------------------------
 -- FILE PATH DISPLAY IN COMMAND LINE
