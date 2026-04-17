@@ -126,7 +126,12 @@ end, { silent = true })
 ---------------------------------------------------
 -- HELP SYSTEM
 ---------------------------------------------------
-local function show_help()
+local show_help
+local show_welcome
+
+show_help = function()
+	local from_welcome = vim.b.is_welcome == true
+
 	vim.cmd("enew")
 	vim.bo.buftype = "nofile"
 	vim.bo.bufhidden = "wipe"
@@ -319,8 +324,17 @@ local function show_help()
 	}
 
 	vim.api.nvim_buf_set_lines(0, 0, -1, false, help_lines)
-	vim.api.nvim_buf_set_keymap(0, "n", "q", ":bdelete<CR>", { noremap = true, silent = true })
-	vim.notify("📘 Help opened — Press 'q' to close (buffer-only, no file written).", vim.log.levels.INFO)
+
+	local function close_help()
+		vim.cmd("bd!")
+		if from_welcome then
+			show_welcome()
+		end
+	end
+
+	vim.keymap.set("n", "q", close_help, { buffer = true, noremap = true, silent = true })
+	vim.keymap.set("n", "<Esc>", close_help, { buffer = true, noremap = true, silent = true })
+	vim.notify("📘 Help opened — Press 'q' or Esc to close. If started from welcome, the startup menu will return.", vim.log.levels.INFO)
 end
 
 map("n", "<A-?>", show_help, { desc = "Show help" })
@@ -328,11 +342,12 @@ map("n", "<A-?>", show_help, { desc = "Show help" })
 ---------------------------------------------------
 -- WELCOME SCREEN
 ---------------------------------------------------
-local function show_welcome()
+show_welcome = function()
 	vim.cmd("enew")
 	vim.bo.buftype = "nofile"
 	vim.bo.bufhidden = "wipe"
 	vim.bo.swapfile = false
+	vim.b.is_welcome = true
 
 	local welcome_text = {
 		"",
