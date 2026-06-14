@@ -264,6 +264,7 @@ show_help = function()
 		"    cs                   → Change Surround with Parenthesis and more (with vim-surround)",
 		"    <leader>xx           → Toggle diagnostics numbers",
 		"    select text → S(     → Surround selection with parentheses, brackets, quotes, etc.",
+		"    Space + n            → Change between relative and line number ",
 		" ",
 		"  ✍️ EDITING:",
 		"    gc  (visual)         → Toggle comment on selection",
@@ -1150,6 +1151,29 @@ vim.keymap.set({ "n", "i", "v" }, "<F2>", function()
 end, {
 	desc = "Interactive Rename Word In File",
 	silent = true,
+})
+---------------------------------------------------
+-- Relative Numbers Toggle
+---------------------------------------------------
+
+vim.keymap.set("n", "<leader>n", function()
+	vim.opt.relativenumber = not vim.opt.relativenumber:get()
+
+	vim.notify(vim.opt.relativenumber:get() and "󰄿 Relative Numbers ON" or "󰄾 Relative Numbers OFF")
+end, {
+	desc = "Toggle Relative Numbers",
+})
+
+---------------------------------------------------
+-- Absolute Numbers Toggle
+---------------------------------------------------
+
+vim.keymap.set("n", "<leader>N", function()
+	vim.opt.number = not vim.opt.number:get()
+
+	vim.notify(vim.opt.number:get() and "󰄿 Absolute Numbers ON" or "󰄾 Absolute Numbers OFF")
+end, {
+	desc = "Toggle Absolute Numbers",
 })
 ---------------------------------------------------
 -- UI SETTINGS
