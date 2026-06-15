@@ -1,136 +1,144 @@
 -- ============================================
 -- TREESITTER + TELESCOPE USAGE CHEATSHEET
 -- ============================================
--- space+ss → start syntax selection
--- space+si → expand syntax node
--- space+sd → shrink syntax node
---
--- vaf → select function
--- vif → inside function
--- vac → select class
--- vic → inside class
---
--- ]f / [f → next/previous function
--- ]c / [c → next/previous class
---
--- space+a / space+A → swap function parameters
---
--- :TSPlaygroundToggle → inspect syntax tree
---
--- Telescope:
--- Alt+v → open result in vertical split
--- Alt+h → open result in horizontal split
+-- <leader>ss → start syntax selection
+-- <leader>si → expand syntax node
+-- <leader>sd → shrink syntax node
+-- vaf / vif  → outer/inner function
+-- vac / vic  → outer/inner class
+-- ]f / [f    → next/prev function
+-- ]c / [c    → next/prev class
+-- <leader>a  → swap param next
+-- <leader>A  → swap param prev
+-- Alt+v      → telescope vertical split
+-- Alt+h      → telescope horizontal split
 -- ============================================
 
 return {
-	{
-		"nvim-treesitter/nvim-treesitter",
-		branch = "master",
-		build = ":TSUpdate",
-		event = "VeryLazy",
-		dependencies = {
-			"nvim-treesitter/nvim-treesitter-textobjects",
-			"nvim-treesitter/playground",
-			"HiPhish/rainbow-delimiters.nvim",
-		},
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate",
+        lazy = false,
+        branch = "main",   -- 0.12 requires main, not master
 
-		config = function()
-			---------------------------------------------------
-			-- Telescope split remaps (Alt instead of Ctrl)
-			---------------------------------------------------
-			local actions = require("telescope.actions")
-			require("telescope").setup({
-				defaults = {
-					mappings = {
-						i = {
-							["<A-v>"] = actions.select_vertical,
-							["<A-h>"] = actions.select_horizontal,
-						},
-						n = {
-							["<A-v>"] = actions.select_vertical,
-							["<A-h>"] = actions.select_horizontal,
-						},
-					},
-				},
-			})
+        dependencies = {
+            "nvim-treesitter/nvim-treesitter-textobjects",
+            "HiPhish/rainbow-delimiters.nvim",
+        },
 
-			---------------------------------------------------
-			-- Treesitter core setup
-			---------------------------------------------------
-			require("nvim-treesitter.configs").setup({
-				ensure_installed = {
-					"lua",
-					"python",
-					"bash",
-					"yaml",
-					"dockerfile",
-					"json",
-					"vim",
-					"markdown",
-				},
-				auto_install = true,
+        config = function()
+            ------------------------------------------------
+            -- Telescope mappings
+            ------------------------------------------------
+            local ok_tel, actions = pcall(require, "telescope.actions")
+            if ok_tel then
+                require("telescope").setup({
+                    defaults = {
+                        mappings = {
+                            i = {
+                                ["<A-v>"] = actions.select_vertical,
+                                ["<A-h>"] = actions.select_horizontal,
+                            },
+                            n = {
+                                ["<A-v>"] = actions.select_vertical,
+                                ["<A-h>"] = actions.select_horizontal,
+                            },
+                        },
+                    },
+                })
+            end
 
-				highlight = {
-					enable = true,
-					additional_vim_regex_highlighting = false,
-				},
+            ------------------------------------------------
+            -- Treesitter — new 0.12 API (no configs.setup)
+            ------------------------------------------------
+            vim.treesitter.language.register("bash", "sh")
 
-				indent = { enable = true },
+            require("nvim-treesitter").setup({
+                ensure_installed = {
+                    "lua",
+                    "python",
+                    "bash",
+                    "yaml",
+                    "dockerfile",
+                    "json",
+                    "vim",
+                    "markdown",
+                    "markdown_inline",
+                },
+                auto_install = true,
+            })
 
-				incremental_selection = {
-					enable = true,
-					keymaps = {
-						init_selection = "<leader>ss",
-						node_incremental = "<leader>si",
-						node_decremental = "<leader>sd",
-					},
-				},
+            ------------------------------------------------
+            -- Highlight + indent via vim.treesitter
+            -- (0.12 enables these natively — no configs key)
+            ------------------------------------------------
+            vim.api.nvim_create_autocmd("FileType", {
+                callback = function()
+                    local ok_hl = pcall(vim.treesitter.start)
+                    if not ok_hl then
+                        vim.bo.syntax = "on"
+                    end
+                end,
+            })
 
-				textobjects = {
-					select = {
-						enable = true,
-						lookahead = true,
-						keymaps = {
-							["af"] = "@function.outer",
-							["if"] = "@function.inner",
-							["ac"] = "@class.outer",
-							["ic"] = "@class.inner",
-							["ab"] = "@block.outer",
-							["ib"] = "@block.inner",
-						},
-					},
+            ------------------------------------------------
+            -- Incremental selection
+            ------------------------------------------------
+            vim.keymap.set("n", "<leader>ss",
+                function() require("nvim-treesitter.incremental_selection").init_selection() end,
+                { desc = "TS: start selection" })
+            vim.keymap.set("x", "<leader>si",
+                function() require("nvim-treesitter.incremental_selection").node_incremental() end,
+                { desc = "TS: expand node" })
+            vim.keymap.set("x", "<leader>sd",
+                function() require("nvim-treesitter.incremental_selection").node_decremental() end,
+                { desc = "TS: shrink node" })
 
-					move = {
-						enable = true,
-						set_jumps = true,
-						goto_next_start = {
-							["]f"] = "@function.outer",
-							["]c"] = "@class.outer",
-						},
-						goto_previous_start = {
-							["[f"] = "@function.outer",
-							["[c"] = "@class.outer",
-						},
-					},
+            ------------------------------------------------
+            -- Textobjects (still uses old-style setup on its own)
+            ------------------------------------------------
+            local ok_to, textobjects = pcall(require, "nvim-treesitter-textobjects")
+            if ok_to then
+                textobjects.setup({
+                    select = {
+                        enable = true,
+                        lookahead = true,
+                        keymaps = {
+                            ["af"] = "@function.outer",
+                            ["if"] = "@function.inner",
+                            ["ac"] = "@class.outer",
+                            ["ic"] = "@class.inner",
+                            ["ab"] = "@block.outer",
+                            ["ib"] = "@block.inner",
+                        },
+                    },
+                    move = {
+                        enable = true,
+                        set_jumps = true,
+                        goto_next_start = {
+                            ["]f"] = "@function.outer",
+                            ["]c"] = "@class.outer",
+                        },
+                        goto_previous_start = {
+                            ["[f"] = "@function.outer",
+                            ["[c"] = "@class.outer",
+                        },
+                    },
+                    swap = {
+                        enable = true,
+                        swap_next     = { ["<leader>a"] = "@parameter.inner" },
+                        swap_previous = { ["<leader>A"] = "@parameter.inner" },
+                    },
+                })
+            end
 
-					swap = {
-						enable = true,
-						swap_next = {
-							["<leader>a"] = "@parameter.inner",
-						},
-						swap_previous = {
-							["<leader>A"] = "@parameter.inner",
-						},
-					},
-				},
-
-				playground = { enable = true },
-			})
-
-			---------------------------------------------------
-			-- Rainbow bracket nesting
-			---------------------------------------------------
-			require("rainbow-delimiters.setup").setup()
-		end,
-	},
+            ------------------------------------------------
+            -- Rainbow delimiters
+            ------------------------------------------------
+            local ok_rb, rainbow = pcall(require, "rainbow-delimiters.setup")
+            if ok_rb then
+                rainbow.setup()
+            end
+        end,
+    },
 }
