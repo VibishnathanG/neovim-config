@@ -85,33 +85,33 @@ end, {
 	desc = "Show Neovim help",
 })
 
-vim.api.nvim_create_autocmd("BufEnter", {
-	callback = function(args)
-		local buf = args.buf
+-- vim.api.nvim_create_autocmd("BufEnter", {
+-- 	callback = function(args)
+-- 		local buf = args.buf
 
-		vim.schedule(function()
-			if not vim.api.nvim_buf_is_valid(buf) then
-				return
-			end
+-- 		vim.schedule(function()
+-- 			if not vim.api.nvim_buf_is_valid(buf) then
+-- 				return
+-- 			end
 
-			local name = vim.api.nvim_buf_get_name(buf)
-			local bo = vim.bo[buf]
+-- 			local name = vim.api.nvim_buf_get_name(buf)
+-- 			local bo = vim.bo[buf]
 
-			if name == "" then
-				return
-			end
+-- 			if name == "" then
+-- 				return
+-- 			end
 
-			if bo.buftype ~= "" then
-				return
-			end
+-- 			if bo.buftype ~= "" then
+-- 				return
+-- 			end
 
-			if not bo.modifiable then
-				return
-			end
+-- 			if not bo.modifiable then
+-- 				return
+-- 			end
 
-			if vim.api.nvim_get_mode().mode == "n" then
-				vim.cmd("startinsert")
-			end
-		end)
-	end,
-})
+-- 			if vim.api.nvim_get_mode().mode == "n" then
+-- 				vim.cmd("startinsert")
+-- 			end
+-- 		end)
+-- 	end,
+-- })
